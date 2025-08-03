@@ -29,8 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Event Manager'),
-        elevation: 0,
+        title: const Text('E-venting'),
         actions: [
           Consumer<AuthProvider>(
             builder: (context, authProvider, child) {
@@ -89,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (context, eventsProvider, child) {
           if (eventsProvider.isLoading) {
             return Container(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withAlpha(77), // 0.3 * 255 ≈ 77
               child: const Center(
                 child: CircularProgressIndicator(
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
@@ -100,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
           if (eventsProvider.error != null) {
             return Container(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withAlpha(77), // 0.3 * 255 ≈ 77
               child: Center(
                 child: Card(
                   margin: const EdgeInsets.all(16),
@@ -142,7 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
           if (eventsProvider.events.isEmpty) {
             return Container(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withAlpha(77), // 0.3 * 255 ≈ 77
               child: Center(
                 child: Card(
                   margin: const EdgeInsets.all(16),
@@ -177,7 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
           return RefreshIndicator(
             onRefresh: () => eventsProvider.loadEvents(),
             child: Container(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withAlpha(26), // 0.1 * 255 ≈ 26
               child: ListView.builder(
                 padding: const EdgeInsets.all(16),
                 itemCount: eventsProvider.events.length,
@@ -291,7 +290,7 @@ class EventCard extends StatelessWidget {
                   Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
                   const SizedBox(width: 4),
                   Text(
-                    '${dateFormat.format(event.startDate)} at ${timeFormat.format(event.startDate)}',
+                    '${DateFormat('dd MMMM, yyyy').format(event.startDate)} at ${timeFormat.format(event.startDate)}',
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontSize: 14,

@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => EventsProvider()),
       ],
       child: MaterialApp(
-        title: 'Event Manager',
+        title: 'E-venting',
         theme: AppTheme.lightTheme,
         home: const AuthWrapper(),
         debugShowCheckedModeBanner: false,

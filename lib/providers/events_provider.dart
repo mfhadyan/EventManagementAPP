@@ -4,25 +4,44 @@ import '../services/api_service.dart';
 
 class EventsProvider with ChangeNotifier {
   List<Event> _events = [];
+  List<Event> _myEvents = [];
   bool _isLoading = false;
   String? _error;
 
   List<Event> get events => _events;
+  List<Event> get myEvents => _myEvents;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
   // Load all events
-  Future<void> loadEvents() async {
+  Future<void> loadEvents({String? search, String? category}) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      _events = await ApiService.getEvents();
+      _events = await ApiService.getEvents(search: search, category: category);
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      _error = e.toString();
+      _error = ApiService.getErrorMessage(e);
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Load my events
+  Future<void> loadMyEvents(String token) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      _myEvents = await ApiService.getMyEvents(token);
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _error = ApiService.getErrorMessage(e);
       _isLoading = false;
       notifyListeners();
     }
@@ -44,53 +63,185 @@ class EventsProvider with ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    print('EventsProvider: Starting to create event');
-    print('EventsProvider: Token length: ${token.length}');
+    try {
+      await ApiService.createEvent(
+        title: title,
+        description: description,
+        location: location,
+        startDate: startDate,
+        endDate: endDate,
+        maxAttendees: maxAttendees,
+        price: price,
+        category: category,
+        token: token,
+      );
 
-    // Try up to 3 times with exponential backoff
-    for (int attempt = 1; attempt <= 3; attempt++) {
-      try {
-        print('EventsProvider: Attempt $attempt of 3');
-        
-        await ApiService.createEvent(
-          title: title,
-          description: description,
-          location: location,
-          startDate: startDate,
-          endDate: endDate,
-          maxAttendees: maxAttendees,
-          price: price,
-          category: category,
-          token: token,
-        );
+      // Reload events to get the updated list
+      await loadEvents();
+      return true;
+    } catch (e) {
+      _error = ApiService.getErrorMessage(e);
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
 
-        print('EventsProvider: Event created successfully');
+  // Update an event
+  Future<bool> updateEvent({
+    required int eventId,
+    required String token,
+    String? title,
+    String? description,
+    String? location,
+    DateTime? startDate,
+    DateTime? endDate,
+    int? maxAttendees,
+    double? price,
+    String? category,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
 
+    try {
+      await ApiService.updateEvent(
+        eventId: eventId,
+        token: token,
+        title: title,
+        description: description,
+        location: location,
+        startDate: startDate,
+        endDate: endDate,
+        maxAttendees: maxAttendees,
+        price: price,
+        category: category,
+      );
+
+      // Reload events to get the updated list
+      await loadEvents();
+      return true;
+    } catch (e) {
+      _error = ApiService.getErrorMessage(e);
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Delete an event
+  Future<bool> deleteEvent({
+    required int eventId,
+    required String token,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final success = await ApiService.deleteEvent(
+        eventId: eventId,
+        token: token,
+      );
+
+      if (success) {
         // Reload events to get the updated list
         await loadEvents();
-        _isLoading = false;
-        notifyListeners();
-        return true;
-      } catch (e) {
-        print('EventsProvider: Error creating event (attempt $attempt): $e');
-        print('EventsProvider: Error type: ${e.runtimeType}');
-        
-        if (attempt < 3) {
-          // Wait before retrying (exponential backoff)
-          final delay = Duration(seconds: attempt * 2);
-          print('EventsProvider: Retrying in ${delay.inSeconds} seconds...');
-          await Future.delayed(delay);
-        } else {
-          // Final attempt failed
-          _error = e.toString();
-          _isLoading = false;
-          notifyListeners();
-          return false;
-        }
       }
+
+      _isLoading = false;
+      notifyListeners();
+      return success;
+    } catch (e) {
+      _error = ApiService.getErrorMessage(e);
+      _isLoading = false;
+      notifyListeners();
+      return false;
     }
-    
-    return false;
+  }
+
+  // Register for an event
+  Future<bool> registerForEvent({
+    required int eventId,
+    required String token,
+    Map<String, dynamic>? additionalInfo,
+  }) async {
+    try {
+      final success = await ApiService.registerForEvent(
+        eventId: eventId,
+        token: token,
+        additionalInfo: additionalInfo,
+      );
+
+      if (success) {
+        // Reload events to get updated registration count
+        await loadEvents();
+      }
+
+      return success;
+    } catch (e) {
+      _error = ApiService.getErrorMessage(e);
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Cancel registration for an event
+  Future<bool> cancelRegistration({
+    required int eventId,
+    required String token,
+  }) async {
+    try {
+      final success = await ApiService.cancelRegistration(
+        eventId: eventId,
+        token: token,
+      );
+
+      if (success) {
+        // Reload events to get updated registration count
+        await loadEvents();
+      }
+
+      return success;
+    } catch (e) {
+      _error = ApiService.getErrorMessage(e);
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Get my registrations
+  Future<List<Map<String, dynamic>>> getMyRegistrations(String token) async {
+    try {
+      return await ApiService.getMyRegistrations(token);
+    } catch (e) {
+      _error = ApiService.getErrorMessage(e);
+      notifyListeners();
+      return [];
+    }
+  }
+
+  // Get event registrations
+  Future<List<Map<String, dynamic>>> getEventRegistrations({
+    required int eventId,
+    required String token,
+  }) async {
+    try {
+      return await ApiService.getEventRegistrations(
+        eventId: eventId,
+        token: token,
+      );
+    } catch (e) {
+      _error = ApiService.getErrorMessage(e);
+      notifyListeners();
+      return [];
+    }
+  }
+
+  // Clear error
+  void clearError() {
+    _error = null;
+    notifyListeners();
   }
 
   // Retry last failed operation
@@ -103,11 +254,5 @@ class EventsProvider with ChangeNotifier {
     // Reload events as a simple retry mechanism
     await loadEvents();
     return _error == null;
-  }
-
-  // Clear error
-  void clearError() {
-    _error = null;
-    notifyListeners();
   }
 } 

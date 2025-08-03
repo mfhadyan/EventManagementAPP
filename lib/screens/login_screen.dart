@@ -101,7 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         
                         // Title
                         const Text(
-                          'Event Manager',
+                          'E-venting',
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,

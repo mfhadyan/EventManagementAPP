@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/auth_provider.dart';
 import '../providers/events_provider.dart';
-import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 
 class CreateEventScreen extends StatefulWidget {
@@ -23,7 +22,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   
   DateTime? _startDate;
   DateTime? _endDate;
-  String _selectedCategory = 'Workshop';
+  String? _selectedCategory;
+  final _categoryController = TextEditingController();
   
   final List<String> _categories = [
     'Workshop',
@@ -33,6 +33,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     'Exam',
     'Seminar',
     'Webinar',
+    'Other',
   ];
 
   @override
@@ -42,6 +43,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     _locationController.dispose();
     _maxAttendeesController.dispose();
     _priceController.dispose();
+    _categoryController.dispose();
     super.dispose();
   }
 
@@ -133,6 +135,18 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       print('Creating event with token: ${authProvider.token!.substring(0, 10)}...');
       print('User: ${authProvider.user?.name}');
 
+      // Determine the category value
+      String? categoryValue;
+      if (_selectedCategory != null) {
+        if (_selectedCategory == 'Other') {
+          categoryValue = _categoryController.text.trim().isNotEmpty 
+              ? _categoryController.text.trim() 
+              : null;
+        } else {
+          categoryValue = _selectedCategory;
+        }
+      }
+
       final success = await eventsProvider.createEvent(
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
@@ -141,7 +155,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         endDate: _endDate!,
         maxAttendees: int.parse(_maxAttendeesController.text),
         price: double.parse(_priceController.text),
-        category: _selectedCategory,
+        category: categoryValue ?? '',
         token: authProvider.token!,
       );
 
@@ -193,51 +207,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     }
   }
 
-  Future<void> _testConnectivity() async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Testing connectivity...'),
-        duration: Duration(seconds: 2),
-      ),
-    );
 
-    final isConnected = await ApiService.testConnectivity();
-    final serverStatus = await ApiService.getServerStatus();
-
-    if (mounted) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Network Diagnostic'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Connectivity Test: ${isConnected ? '✅ PASSED' : '❌ FAILED'}'),
-              const SizedBox(height: 8),
-              Text('Server Status: ${serverStatus['status']}'),
-              if (serverStatus['status'] == 'offline')
-                Text('Error: ${serverStatus['error']}'),
-              const SizedBox(height: 16),
-              const Text(
-                'If connectivity test fails, please check:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const Text('• Your internet connection'),
-              const Text('• Server availability'),
-              const Text('• Firewall settings'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -285,23 +255,43 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                       const SizedBox(height: 16),
 
                       // Category
-                      DropdownButtonFormField<String>(
-                        value: _selectedCategory,
-                        decoration: const InputDecoration(
-                          labelText: 'Category',
-                          prefixIcon: Icon(Icons.category),
-                        ),
-                        items: _categories.map((String category) {
-                          return DropdownMenuItem<String>(
-                            value: category,
-                            child: Text(category),
-                          );
-                        }).toList(),
-                        onChanged: (String? newValue) {
-                          setState(() {
-                            _selectedCategory = newValue!;
-                          });
-                        },
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          DropdownButtonFormField<String>(
+                            value: _selectedCategory,
+                            decoration: const InputDecoration(
+                              labelText: 'Category (Optional)',
+                              prefixIcon: Icon(Icons.category),
+                            ),
+                            items: _categories.map((String category) {
+                              return DropdownMenuItem<String>(
+                                value: category,
+                                child: Text(category),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                _selectedCategory = newValue;
+                                if (newValue != 'Other') {
+                                  _categoryController.clear();
+                                }
+                              });
+                            },
+                          ),
+                          if (_selectedCategory == 'Other')
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: TextFormField(
+                                controller: _categoryController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Custom Category',
+                                  prefixIcon: Icon(Icons.edit),
+                                  hintText: 'Enter your custom category',
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                       const SizedBox(height: 16),
 
@@ -470,34 +460,21 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                       // Create Button
                       Consumer<EventsProvider>(
                         builder: (context, eventsProvider, child) {
-                          return Column(
-                            children: [
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                  onPressed: eventsProvider.isLoading ? null : _createEvent,
-                                  child: eventsProvider.isLoading
-                                      ? const SizedBox(
-                                          height: 20,
-                                          width: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                          ),
-                                        )
-                                      : const Text('Create Event'),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton.icon(
-                                  onPressed: _testConnectivity,
-                                  icon: const Icon(Icons.wifi_find),
-                                  label: const Text('Test Network Connection'),
-                                ),
-                              ),
-                            ],
+                          return SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: eventsProvider.isLoading ? null : _createEvent,
+                              child: eventsProvider.isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                      ),
+                                    )
+                                  : const Text('Create Event'),
+                            ),
                           );
                         },
                       ),

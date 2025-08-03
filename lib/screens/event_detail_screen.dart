@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../models/event.dart';
+import '../providers/auth_provider.dart';
+import '../providers/events_provider.dart';
 import '../theme/app_theme.dart';
 
 class EventDetailScreen extends StatelessWidget {
@@ -362,12 +365,164 @@ class EventDetailScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 32),
+
+                // Action Buttons
+                Consumer<AuthProvider>(
+                  builder: (context, authProvider, child) {
+                    if (!authProvider.isAuthenticated) {
+                      return const SizedBox.shrink();
+                    }
+
+                    return Column(
+                      children: [
+                        // Register Button
+                        if (event.isAvailable)
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () => _registerForEvent(context, authProvider),
+                              icon: const Icon(Icons.how_to_reg),
+                              label: const Text('Register for Event'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                              ),
+                            ),
+                          ),
+                        
+                        const SizedBox(height: 12),
+                        
+                        // Delete Button (only for event creator)
+                        if (authProvider.user?.id == event.creator.id)
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () => _showDeleteConfirmation(context, authProvider),
+                              icon: const Icon(Icons.delete),
+                              label: const Text('Delete Event'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
               ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _registerForEvent(BuildContext context, AuthProvider authProvider) async {
+    final eventsProvider = Provider.of<EventsProvider>(context, listen: false);
+    
+    try {
+      final success = await eventsProvider.registerForEvent(
+        eventId: event.id,
+        token: authProvider.token!,
+      );
+
+      if (success && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Successfully registered for the event!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pop();
+      } else if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(eventsProvider.error ?? 'Failed to register for event'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _showDeleteConfirmation(BuildContext context, AuthProvider authProvider) async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Event'),
+          content: Text(
+            'Are you sure you want to delete "${event.title}"? This action cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _deleteEvent(context, authProvider);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteEvent(BuildContext context, AuthProvider authProvider) async {
+    final eventsProvider = Provider.of<EventsProvider>(context, listen: false);
+    
+    try {
+      final success = await eventsProvider.deleteEvent(
+        eventId: event.id,
+        token: authProvider.token!,
+      );
+
+      if (success && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Event deleted successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pop();
+      } else if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(eventsProvider.error ?? 'Failed to delete event'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildDetailRow(BuildContext context, IconData icon, String label, String value, {Color? valueColor}) {

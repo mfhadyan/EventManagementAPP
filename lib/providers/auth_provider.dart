@@ -16,10 +16,10 @@ class AuthProvider with ChangeNotifier {
   // Initialize auth state from SharedPreferences
   Future<void> initialize() async {
     final prefs = await SharedPreferences.getInstance();
-    _token = prefs.getString('auth_token'); // Use same key as working code
+    _token = prefs.getString('auth_token');
     if (_token != null) {
       try {
-        _user = await ApiService.getUserProfile(_token!);
+        _user = await ApiService.getProfile(_token!);
         notifyListeners();
       } catch (e) {
         // Token is invalid, clear it
@@ -45,7 +45,7 @@ class AuthProvider with ChangeNotifier {
         
         // Save token to SharedPreferences
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('auth_token', _token!); // Use same key as working code
+        await prefs.setString('auth_token', _token!);
         
         _isLoading = false;
         notifyListeners();
@@ -102,13 +102,33 @@ class AuthProvider with ChangeNotifier {
 
   // Logout
   Future<void> logout() async {
+    if (_token != null) {
+      try {
+        await ApiService.logout(_token!);
+      } catch (e) {
+        // Ignore logout errors
+      }
+    }
+    
     _user = null;
     _token = null;
     
     // Clear token from SharedPreferences
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('auth_token'); // Use same key as working code
+    await prefs.remove('auth_token');
     
     notifyListeners();
+  }
+
+  // Get user profile
+  Future<void> refreshProfile() async {
+    if (_token != null) {
+      try {
+        _user = await ApiService.getProfile(_token!);
+        notifyListeners();
+      } catch (e) {
+        // Profile refresh failed, but don't logout
+      }
+    }
   }
 } 
