@@ -1,6 +1,6 @@
-# Event Manager App
+# E-venting - Event Management Application
 
-A beautiful and functional event management Flutter application with a modern UI/UX design. This app allows users to register, login, view events, and create new events.
+A beautiful and functional event management Flutter application with a modern UI/UX design. This app allows users to register, login, view events, create new events, and manage event registrations.
 
 ## Features
 
@@ -8,7 +8,8 @@ A beautiful and functional event management Flutter application with a modern UI
 - **User Registration**: Create new accounts with name, email, password, student number, major, and class year
 - **User Login**: Secure authentication with student number and password
 - **Persistent Login**: Automatic login using SharedPreferences
-- **Logout**: Secure logout functionality
+- **Profile Management**: View and manage user profile information
+- **Secure Logout**: Proper logout with API call
 
 ### 📅 Event Management
 - **View Events**: Browse all available events with detailed information
@@ -19,20 +20,32 @@ A beautiful and functional event management Flutter application with a modern UI
   - Attendance statistics
   - Organizer details
 - **Create Events**: Add new events with:
-  - Title, description, and category selection
+  - Title, description, and optional category selection
   - Location specification
   - Date and time selection
   - Maximum attendees and pricing
-- **Event Categories**: Support for various event types (Workshop, Meetup, Conference, Course, Exam, etc.)
+  - Custom category support
+- **Event Categories**: Support for various event types with custom category input
+- **Event Registration**: Register for events with additional information
+- **Event Deletion**: Delete events (creator only) with confirmation dialog
 
 ### 🎨 UI/UX Features
 - **Modern Design**: Clean and aesthetic interface with custom color palette
 - **Responsive Layout**: Works seamlessly across different screen sizes
 - **Custom Theme**: Beautiful gradient backgrounds and consistent styling
-- **Pixelated Font**: Custom font family for unique visual appeal
+- **Custom App Icon**: Professional event-themed application icon
+- **Background Images**: Beautiful background imagery for enhanced visual appeal
 - **Loading States**: Smooth loading indicators and error handling
 - **Pull-to-Refresh**: Refresh event list by pulling down
 - **Form Validation**: Comprehensive input validation with user-friendly error messages
+- **Network Diagnostics**: Built-in connectivity testing and error reporting
+
+### 🔍 Advanced Features
+- **Search & Filter**: Search events by title and filter by category
+- **Event Registration**: Register for events with optional additional information
+- **Registration Management**: View and manage event registrations
+- **My Events**: View events created by the current user
+- **Health Check**: API connectivity testing and status monitoring
 
 ## Color Palette
 
@@ -44,16 +57,30 @@ The app uses a carefully selected color scheme:
 
 ## API Integration
 
-The app integrates with the Event Management API at `http://103.160.63.165/api` and supports:
-- User authentication (login with student number, register with full student details)
-- Event listing and creation
-- User profile management
+The app integrates with the Event Management API at `http://103.160.63.165/api` and supports all endpoints:
 
-### API Endpoints:
+### Authentication Endpoints:
 - `POST /register` - Register new student account
 - `POST /login` - Login with student number and password
-- `GET /events` - Get all events (public)
+- `GET /profile` - Get user profile information
+- `POST /logout` - Logout user
+
+### Events Endpoints:
+- `GET /events` - Get all events (with search and filter support)
+- `GET /events/{id}` - Get single event details
 - `POST /events` - Create new event (authenticated)
+- `PUT /events/{id}` - Update event (authenticated, creator only)
+- `DELETE /events/{id}` - Delete event (authenticated, creator only)
+- `GET /my-events` - Get events created by current user
+
+### Registration Endpoints:
+- `POST /events/{id}/register` - Register for an event
+- `DELETE /events/{id}/cancel` - Cancel event registration
+- `GET /my-registrations` - Get user's event registrations
+- `GET /events/{id}/registrations` - Get event registrations (creator only)
+
+### Health Check:
+- `GET /health` - API health status
 
 ## Dependencies
 
@@ -61,7 +88,6 @@ The app integrates with the Event Management API at `http://103.160.63.165/api` 
 - **http**: HTTP requests for API communication
 - **provider**: State management
 - **shared_preferences**: Local data storage for authentication
-- **path_provider**: File system access
 - **intl**: Internationalization and date formatting
 - **cupertino_icons**: iOS-style icons
 
@@ -86,6 +112,13 @@ lib/
 │   └── api_service.dart     # HTTP API client
 └── theme/                   # App theming
     └── app_theme.dart       # Custom theme configuration
+
+assets/
+├── images/                  # App assets
+│   ├── EventIcon1-removebg-preview.png # App icon
+│   └── 9904.jpg            # Background image
+└── fonts/                   # Custom fonts
+    └── VCR_OSD_MONO_1.001.ttf # Pixelated font
 ```
 
 ## Getting Started
@@ -101,7 +134,7 @@ lib/
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd tugas_event
+   cd e_venting
    ```
 
 2. **Install dependencies**
@@ -116,36 +149,70 @@ lib/
 
 ### Usage
 
-1. **First Launch**: The app will show the login screen
+1. **First Launch**: The app will show the login screen with custom app icon
 2. **Registration**: Tap "Sign Up" to create a new account
 3. **Login**: Enter your credentials to access the app
-4. **Browse Events**: View all available events on the home screen
+4. **Browse Events**: View all available events on the home screen with background image
 5. **Event Details**: Tap on any event to see detailed information
-6. **Create Event**: Use the floating action button to create new events
-7. **Logout**: Access the menu in the top-right corner to logout
+6. **Register for Events**: Use the "Register for Event" button in event details
+7. **Create Event**: Use the floating action button to create new events
+8. **Delete Events**: Event creators can delete their events with confirmation
+9. **Logout**: Access the menu in the top-right corner to logout
 
 ## Technical Details
 
 ### State Management
 The app uses the Provider pattern for state management:
-- `AuthProvider`: Manages user authentication state
-- `EventsProvider`: Manages events data and operations
+- `AuthProvider`: Manages user authentication state and profile
+- `EventsProvider`: Manages events data, registrations, and CRUD operations
 
 ### Local Storage
 - **SharedPreferences**: Stores authentication tokens for persistent login
-- **Path Provider**: Provides access to app directories for file storage
+- **Token Management**: Secure token storage with proper cleanup
 
 ### API Communication
-- RESTful API integration with proper error handling
-- JSON serialization/deserialization
-- HTTP status code handling
-- Network error management
+- **Complete API Integration**: All endpoints from the Postman collection implemented
+- **Error Handling**: Comprehensive error handling with user-friendly messages
+- **Network Diagnostics**: Built-in health checks and connectivity testing
+- **Retry Logic**: Automatic retry mechanisms for failed requests
+- **Timeout Management**: Proper timeout handling for all API calls
 
 ### UI Components
 - **Custom Cards**: Beautiful event cards with gradient backgrounds
 - **Form Validation**: Real-time input validation with error messages
 - **Loading Indicators**: Smooth loading states throughout the app
 - **Responsive Design**: Adapts to different screen sizes
+- **Custom Icons**: Professional app icon and visual elements
+- **Background Images**: Enhanced visual appeal with background imagery
+
+### Date Formatting
+- **Home Screen**: Events display dates as "dd month, yyyy" (e.g., "15 January, 2024")
+- **Event Details**: Full date and time information
+- **Form Inputs**: User-friendly date and time pickers
+
+## Recent Updates
+
+### v2.0.0 - Complete API Integration
+- ✅ **Full API Support**: All endpoints from Postman collection implemented
+- ✅ **Event Registration**: Complete registration system with additional info
+- ✅ **Event Management**: Create, update, delete events with proper permissions
+- ✅ **Search & Filter**: Advanced event search and category filtering
+- ✅ **User Profile**: Complete profile management system
+- ✅ **Network Diagnostics**: Built-in connectivity testing and error reporting
+
+### v1.5.0 - UI/UX Enhancements
+- ✅ **Custom App Icon**: Professional event-themed application icon
+- ✅ **Background Images**: Beautiful background imagery for enhanced visual appeal
+- ✅ **Date Format Updates**: Improved date display format
+- ✅ **Optional Categories**: Flexible category selection with custom input
+- ✅ **Confirmation Dialogs**: User-friendly confirmation for destructive actions
+
+### v1.0.0 - Core Features
+- ✅ **Authentication System**: Complete login/register functionality
+- ✅ **Event Management**: Basic CRUD operations for events
+- ✅ **Modern UI**: Clean, responsive design with custom theming
+- ✅ **State Management**: Provider-based state management
+- ✅ **API Integration**: RESTful API communication
 
 ## Contributing
 
@@ -162,12 +229,12 @@ This project is created for educational purposes as a test project.
 ## Screenshots
 
 The app features:
-- Beautiful login/register screens with gradient backgrounds
-- Clean event listing with detailed cards
-- Comprehensive event creation form
-- Detailed event information display
-- Modern navigation and user experience
+- Beautiful login/register screens with custom app icon
+- Clean event listing with detailed cards and background imagery
+- Comprehensive event creation form with optional categories
+- Detailed event information display with registration options
+- Modern navigation and user experience with confirmation dialogs
 
 ---
 
-**Note**: This is a test project created for educational purposes. The app integrates with a provided API and demonstrates modern Flutter development practices with focus on UI/UX design and user experience.
+**Note**: This is a test project created for educational purposes. The app integrates with a provided API and demonstrates modern Flutter development practices with focus on UI/UX design, complete API integration, and user experience.
