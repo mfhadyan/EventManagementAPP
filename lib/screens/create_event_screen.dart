@@ -132,9 +132,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         return;
       }
 
-      print('Creating event with token: ${authProvider.token!.substring(0, 10)}...');
-      print('User: ${authProvider.user?.name}');
-
       // Determine the category value
       String? categoryValue;
       if (_selectedCategory != null) {
@@ -167,42 +164,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           ),
         );
         Navigator.of(context).pop();
-      } else if (mounted) {
-        // Show error dialog with retry option
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Failed to Create Event'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(eventsProvider.error ?? 'Unknown error occurred'),
-                const SizedBox(height: 16),
-                const Text(
-                  'Possible solutions:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const Text('• Check your internet connection'),
-                const Text('• Verify the server is running'),
-                const Text('• Try again in a few moments'),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  _createEvent(); // Retry
-                },
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
-        );
       }
     }
   }
