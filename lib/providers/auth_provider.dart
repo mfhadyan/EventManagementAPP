@@ -16,7 +16,7 @@ class AuthProvider with ChangeNotifier {
   // Initialize auth state from SharedPreferences
   Future<void> initialize() async {
     final prefs = await SharedPreferences.getInstance();
-    _token = prefs.getString('token');
+    _token = prefs.getString('auth_token'); // Use same key as working code
     if (_token != null) {
       try {
         _user = await ApiService.getUserProfile(_token!);
@@ -45,7 +45,7 @@ class AuthProvider with ChangeNotifier {
         
         // Save token to SharedPreferences
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', _token!);
+        await prefs.setString('auth_token', _token!); // Use same key as working code
         
         _isLoading = false;
         notifyListeners();
@@ -107,7 +107,7 @@ class AuthProvider with ChangeNotifier {
     
     // Clear token from SharedPreferences
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('token');
+    await prefs.remove('auth_token'); // Use same key as working code
     
     notifyListeners();
   }

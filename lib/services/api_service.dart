@@ -1,15 +1,30 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../models/event.dart';
 import '../models/user.dart';
 
 class ApiService {
+  // Configuration - Change this to test with different servers
   static const String baseUrl = 'http://103.160.63.165/api';
+  
+  // Enable/disable debug logging
+  static const bool enableDebugLogging = true;
+  
+  // Timeout settings
+  static const Duration requestTimeout = Duration(seconds: 30);
+  static const Duration connectivityTestTimeout = Duration(seconds: 10);
   
   // Get all events
   static Future<List<Event>> getEvents() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/events')).timeout(const Duration(seconds: 30));
+      if (enableDebugLogging) {
+        print('ApiService: Attempting to fetch events from $baseUrl/events');
+      }
+      final response = await http.get(Uri.parse('$baseUrl/events')).timeout(requestTimeout);
+      
+      print('ApiService: Response status: ${response.statusCode}');
+      print('ApiService: Response body: ${response.body}');
       
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
@@ -19,13 +34,15 @@ class ApiService {
           return eventsJson.map((json) => Event.fromJson(json)).toList();
         }
       }
-      throw Exception('Failed to load events');
+      throw Exception('Failed to load events: ${response.statusCode} - ${response.body}');
     } catch (e) {
       print('Exception in getEvents: $e');
       print('Exception type: ${e.runtimeType}');
       print('Exception details: ${e.toString()}');
       
-      if (e.toString().contains('SocketException') || e.toString().contains('Failed to fetch')) {
+      if (e is SocketException) {
+        throw Exception('Network error: Unable to connect to the server. Please check your internet connection and try again.');
+      } else if (e.toString().contains('Failed to fetch')) {
         throw Exception('Network error: Unable to connect to the server. Please check your internet connection and try again.');
       } else if (e.toString().contains('HandshakeException')) {
         throw Exception('SSL/TLS error: Unable to establish secure connection. This might be due to network security settings.');
@@ -48,22 +65,44 @@ class ApiService {
     required String category,
     required String token,
   }) async {
-        try {
+    try {
+      // Format dates as ISO 8601 with 'Z' suffix (like the working code)
+      final String formattedStartDateTime = startDate.toIso8601String().split('.')[0] + 'Z';
+      final String formattedEndDateTime = endDate.toIso8601String().split('.')[0] + 'Z';
+
       final requestBody = {
-        'name': title,
+        'title': title,
         'description': description,
+        'start_date': formattedStartDateTime,
+        'end_date': formattedEndDateTime,
         'location': location,
-        'start_date': startDate.toIso8601String(),
-        'end_date': endDate.toIso8601String(),
         'max_attendees': maxAttendees,
         'price': price,
         'category': category,
       };
 
-      print('Request URL: $baseUrl/events');
-      print('Request body: ${json.encode(requestBody)}');
-      print('Authorization token: ${token.isNotEmpty ? 'Present' : 'Missing'}');
+      print('ApiService: Creating event...');
+      print('ApiService: Request URL: $baseUrl/events');
+      print('ApiService: Request body: ${json.encode(requestBody)}');
+      print('ApiService: Authorization token: ${token.isNotEmpty ? 'Present (${token.length} chars)' : 'Missing'}');
+      print('ApiService: Token preview: ${token.isNotEmpty ? token.substring(0, token.length > 20 ? 20 : token.length) + '...' : 'N/A'}');
       
+      // Test connectivity first
+      try {
+        if (enableDebugLogging) {
+          print('ApiService: Testing connectivity to $baseUrl...');
+        }
+        final testResponse = await http.get(Uri.parse('$baseUrl')).timeout(connectivityTestTimeout);
+        if (enableDebugLogging) {
+          print('ApiService: Connectivity test response: ${testResponse.statusCode}');
+        }
+      } catch (e) {
+        if (enableDebugLogging) {
+          print('ApiService: Connectivity test failed: $e');
+        }
+        throw Exception('Server connectivity test failed: $e');
+      }
+
       final response = await http.post(
         Uri.parse('$baseUrl/events'),
         headers: {
@@ -71,10 +110,11 @@ class ApiService {
           'Authorization': 'Bearer $token',
         },
         body: json.encode(requestBody),
-      ).timeout(const Duration(seconds: 30));
+      ).timeout(requestTimeout);
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      print('ApiService: Response status: ${response.statusCode}');
+      print('ApiService: Response headers: ${response.headers}');
+      print('ApiService: Response body: ${response.body}');
       
       if (response.statusCode == 201 || response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
@@ -122,12 +162,16 @@ class ApiService {
       print('Exception type: ${e.runtimeType}');
       print('Exception details: ${e.toString()}');
       
-      if (e.toString().contains('SocketException') || e.toString().contains('Failed to fetch')) {
+      if (e is SocketException) {
+        throw Exception('Network error: Unable to connect to the server. Please check your internet connection and try again.');
+      } else if (e.toString().contains('Failed to fetch')) {
         throw Exception('Network error: Unable to connect to the server. Please check your internet connection and try again.');
       } else if (e.toString().contains('HandshakeException')) {
         throw Exception('SSL/TLS error: Unable to establish secure connection. This might be due to network security settings.');
       } else if (e.toString().contains('TimeoutException')) {
         throw Exception('Request timeout: The server took too long to respond. Please try again.');
+      } else if (e.toString().contains('Connectivity test failed')) {
+        throw Exception('Server is not reachable. Please check if the server is running and accessible.');
       }
       throw Exception('Failed to create event: $e');
     }
@@ -209,6 +253,42 @@ class ApiService {
       throw Exception('Failed to get user profile');
     } catch (e) {
       throw Exception('Failed to get user profile: $e');
+    }
+  }
+
+  // Test network connectivity
+  static Future<bool> testConnectivity() async {
+    try {
+      if (enableDebugLogging) {
+        print('ApiService: Testing connectivity to $baseUrl...');
+      }
+      final response = await http.get(Uri.parse('$baseUrl')).timeout(connectivityTestTimeout);
+      if (enableDebugLogging) {
+        print('ApiService: Connectivity test successful: ${response.statusCode}');
+      }
+      return true;
+    } catch (e) {
+      if (enableDebugLogging) {
+        print('ApiService: Connectivity test failed: $e');
+      }
+      return false;
+    }
+  }
+
+  // Get server status
+  static Future<Map<String, dynamic>> getServerStatus() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl')).timeout(connectivityTestTimeout);
+      return {
+        'status': 'online',
+        'statusCode': response.statusCode,
+        'responseTime': '${response.headers['x-response-time'] ?? 'unknown'}',
+      };
+    } catch (e) {
+      return {
+        'status': 'offline',
+        'error': e.toString(),
+      };
     }
   }
 } 

@@ -47,32 +47,62 @@ class EventsProvider with ChangeNotifier {
     print('EventsProvider: Starting to create event');
     print('EventsProvider: Token length: ${token.length}');
 
-    try {
-      await ApiService.createEvent(
-        title: title,
-        description: description,
-        location: location,
-        startDate: startDate,
-        endDate: endDate,
-        maxAttendees: maxAttendees,
-        price: price,
-        category: category,
-        token: token,
-      );
+    // Try up to 3 times with exponential backoff
+    for (int attempt = 1; attempt <= 3; attempt++) {
+      try {
+        print('EventsProvider: Attempt $attempt of 3');
+        
+        await ApiService.createEvent(
+          title: title,
+          description: description,
+          location: location,
+          startDate: startDate,
+          endDate: endDate,
+          maxAttendees: maxAttendees,
+          price: price,
+          category: category,
+          token: token,
+        );
 
-      print('EventsProvider: Event created successfully');
+        print('EventsProvider: Event created successfully');
 
-      // Reload events to get the updated list
-      await loadEvents();
-      return true;
-    } catch (e) {
-      print('EventsProvider: Error creating event: $e');
-      print('EventsProvider: Error type: ${e.runtimeType}');
-      _error = e.toString();
-      _isLoading = false;
-      notifyListeners();
-      return false;
+        // Reload events to get the updated list
+        await loadEvents();
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } catch (e) {
+        print('EventsProvider: Error creating event (attempt $attempt): $e');
+        print('EventsProvider: Error type: ${e.runtimeType}');
+        
+        if (attempt < 3) {
+          // Wait before retrying (exponential backoff)
+          final delay = Duration(seconds: attempt * 2);
+          print('EventsProvider: Retrying in ${delay.inSeconds} seconds...');
+          await Future.delayed(delay);
+        } else {
+          // Final attempt failed
+          _error = e.toString();
+          _isLoading = false;
+          notifyListeners();
+          return false;
+        }
+      }
     }
+    
+    return false;
+  }
+
+  // Retry last failed operation
+  Future<bool> retryLastOperation() async {
+    if (_error == null) return true;
+    
+    _error = null;
+    notifyListeners();
+    
+    // Reload events as a simple retry mechanism
+    await loadEvents();
+    return _error == null;
   }
 
   // Clear error

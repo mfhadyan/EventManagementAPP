@@ -30,6 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Event Manager'),
+        elevation: 0,
         actions: [
           Consumer<AuthProvider>(
             builder: (context, authProvider, child) {
@@ -77,84 +78,118 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: Consumer<EventsProvider>(
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('images/9904.jpg'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Consumer<EventsProvider>(
         builder: (context, eventsProvider, child) {
           if (eventsProvider.isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
+            return Container(
+              color: Colors.black.withOpacity(0.3),
+              child: const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
             );
           }
 
           if (eventsProvider.error != null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: Colors.red,
+            return Container(
+              color: Colors.black.withOpacity(0.3),
+              child: Center(
+                child: Card(
+                  margin: const EdgeInsets.all(16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          size: 64,
+                          color: Colors.red,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Error loading events',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          eventsProvider.error!,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () {
+                            eventsProvider.loadEvents();
+                          },
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Error loading events',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    eventsProvider.error!,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      eventsProvider.loadEvents();
-                    },
-                    child: const Text('Retry'),
-                  ),
-                ],
+                ),
               ),
             );
           }
 
           if (eventsProvider.events.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.event_busy,
-                    size: 64,
-                    color: Colors.grey[400],
+            return Container(
+              color: Colors.black.withOpacity(0.3),
+              child: Center(
+                child: Card(
+                  margin: const EdgeInsets.all(16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.event_busy,
+                          size: 64,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No events available',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Be the first to create an event!',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No events available',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Be the first to create an event!',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
+                ),
               ),
             );
           }
 
           return RefreshIndicator(
             onRefresh: () => eventsProvider.loadEvents(),
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: eventsProvider.events.length,
-              itemBuilder: (context, index) {
-                final event = eventsProvider.events[index];
-                return EventCard(event: event);
-              },
+            child: Container(
+              color: Colors.black.withOpacity(0.1),
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: eventsProvider.events.length,
+                itemBuilder: (context, index) {
+                  final event = eventsProvider.events[index];
+                  return EventCard(event: event);
+                },
+              ),
             ),
           );
         },
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {

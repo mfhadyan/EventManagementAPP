@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/auth_provider.dart';
 import '../providers/events_provider.dart';
+import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 
 class CreateEventScreen extends StatefulWidget {
@@ -153,13 +154,88 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         );
         Navigator.of(context).pop();
       } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(eventsProvider.error ?? 'Failed to create event'),
-            backgroundColor: Colors.red,
+        // Show error dialog with retry option
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Failed to Create Event'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(eventsProvider.error ?? 'Unknown error occurred'),
+                const SizedBox(height: 16),
+                const Text(
+                  'Possible solutions:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const Text('• Check your internet connection'),
+                const Text('• Verify the server is running'),
+                const Text('• Try again in a few moments'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _createEvent(); // Retry
+                },
+                child: const Text('Retry'),
+              ),
+            ],
           ),
         );
       }
+    }
+  }
+
+  Future<void> _testConnectivity() async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Testing connectivity...'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+
+    final isConnected = await ApiService.testConnectivity();
+    final serverStatus = await ApiService.getServerStatus();
+
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Network Diagnostic'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Connectivity Test: ${isConnected ? '✅ PASSED' : '❌ FAILED'}'),
+              const SizedBox(height: 8),
+              Text('Server Status: ${serverStatus['status']}'),
+              if (serverStatus['status'] == 'offline')
+                Text('Error: ${serverStatus['error']}'),
+              const SizedBox(height: 16),
+              const Text(
+                'If connectivity test fails, please check:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const Text('• Your internet connection'),
+              const Text('• Server availability'),
+              const Text('• Firewall settings'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
     }
   }
 
@@ -394,21 +470,34 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                       // Create Button
                       Consumer<EventsProvider>(
                         builder: (context, eventsProvider, child) {
-                          return SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: eventsProvider.isLoading ? null : _createEvent,
-                              child: eventsProvider.isLoading
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                      ),
-                                    )
-                                  : const Text('Create Event'),
-                            ),
+                          return Column(
+                            children: [
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: eventsProvider.isLoading ? null : _createEvent,
+                                  child: eventsProvider.isLoading
+                                      ? const SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                          ),
+                                        )
+                                      : const Text('Create Event'),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: _testConnectivity,
+                                  icon: const Icon(Icons.wifi_find),
+                                  label: const Text('Test Network Connection'),
+                                ),
+                              ),
+                            ],
                           );
                         },
                       ),

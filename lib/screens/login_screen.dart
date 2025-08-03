@@ -77,16 +77,24 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         // App Logo/Icon
                         Container(
-                          width: 80,
-                          height: 80,
+                          width: 160,
+                          height: 160,
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryColor,
-                            borderRadius: BorderRadius.circular(40),
+                            borderRadius: BorderRadius.circular(50),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
                           ),
-                          child: const Icon(
-                            Icons.calendar_month,
-                            size: 40,
-                            color: Colors.white,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(50),
+                            child: Image.asset(
+                              'images/EventIcon1-removebg-preview.png',
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 24),
