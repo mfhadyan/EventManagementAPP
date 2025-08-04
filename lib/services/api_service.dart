@@ -7,9 +7,7 @@ import '../models/user.dart';
 class ApiService {
   // Configuration
   static const String baseUrl = 'http://103.160.63.165/api';
-  static const Duration requestTimeout = Duration(seconds: 30);
-  static const Duration connectivityTestTimeout = Duration(seconds: 10);
-  static const bool enableDebugLogging = true;
+
 
   // Headers
   static Map<String, String> get _defaultHeaders => {
@@ -22,31 +20,6 @@ class ApiService {
     'Authorization': 'Bearer $token',
   };
 
-  // Health Check
-  static Future<bool> healthCheck() async {
-    try {
-      if (enableDebugLogging) {
-        print('ApiService: Checking API health...');
-      }
-      
-      final response = await http.get(
-        Uri.parse('$baseUrl/health'),
-        headers: _defaultHeaders,
-      ).timeout(connectivityTestTimeout);
-
-      if (enableDebugLogging) {
-        print('ApiService: Health check response: ${response.statusCode}');
-      }
-
-      return response.statusCode == 200;
-    } catch (e) {
-      if (enableDebugLogging) {
-        print('ApiService: Health check failed: $e');
-      }
-      return false;
-    }
-  }
-
   // Authentication Methods
   static Future<Map<String, dynamic>> register({
     required String name,
@@ -57,10 +30,6 @@ class ApiService {
     required String password,
   }) async {
     try {
-      if (enableDebugLogging) {
-        print('ApiService: Registering user: $studentNumber');
-      }
-
       final response = await http.post(
         Uri.parse('$baseUrl/register'),
         headers: _defaultHeaders,
@@ -73,12 +42,7 @@ class ApiService {
           'password': password,
           'password_confirmation': password,
         }),
-      ).timeout(requestTimeout);
-
-      if (enableDebugLogging) {
-        print('ApiService: Register response: ${response.statusCode}');
-        print('ApiService: Register body: ${response.body}');
-      }
+      );
 
       final data = json.decode(response.body);
       
@@ -88,9 +52,6 @@ class ApiService {
         throw Exception(data['message'] ?? 'Registration failed');
       }
     } catch (e) {
-      if (enableDebugLogging) {
-        print('ApiService: Register error: $e');
-      }
       rethrow;
     }
   }
@@ -100,10 +61,6 @@ class ApiService {
     required String password,
   }) async {
     try {
-      if (enableDebugLogging) {
-        print('ApiService: Logging in user: $studentNumber');
-      }
-
       final response = await http.post(
         Uri.parse('$baseUrl/login'),
         headers: _defaultHeaders,
@@ -111,12 +68,7 @@ class ApiService {
           'student_number': studentNumber,
           'password': password,
         }),
-      ).timeout(requestTimeout);
-
-      if (enableDebugLogging) {
-        print('ApiService: Login response: ${response.statusCode}');
-        print('ApiService: Login body: ${response.body}');
-      }
+      );
 
       final data = json.decode(response.body);
       
@@ -126,28 +78,16 @@ class ApiService {
         throw Exception(data['message'] ?? 'Login failed');
       }
     } catch (e) {
-      if (enableDebugLogging) {
-        print('ApiService: Login error: $e');
-      }
       rethrow;
     }
   }
 
   static Future<User> getProfile(String token) async {
     try {
-      if (enableDebugLogging) {
-        print('ApiService: Getting user profile...');
-      }
-
       final response = await http.get(
         Uri.parse('$baseUrl/profile'),
         headers: _authHeaders(token),
-      ).timeout(requestTimeout);
-
-      if (enableDebugLogging) {
-        print('ApiService: Profile response: ${response.statusCode}');
-        print('ApiService: Profile body: ${response.body}');
-      }
+      );
 
       final data = json.decode(response.body);
       
@@ -157,33 +97,19 @@ class ApiService {
         throw Exception(data['message'] ?? 'Failed to get profile');
       }
     } catch (e) {
-      if (enableDebugLogging) {
-        print('ApiService: Profile error: $e');
-      }
       rethrow;
     }
   }
 
   static Future<bool> logout(String token) async {
     try {
-      if (enableDebugLogging) {
-        print('ApiService: Logging out...');
-      }
-
       final response = await http.post(
         Uri.parse('$baseUrl/logout'),
         headers: _authHeaders(token),
-      ).timeout(requestTimeout);
-
-      if (enableDebugLogging) {
-        print('ApiService: Logout response: ${response.statusCode}');
-      }
+      );
 
       return response.statusCode == 200;
     } catch (e) {
-      if (enableDebugLogging) {
-        print('ApiService: Logout error: $e');
-      }
       return false;
     }
   }
@@ -191,10 +117,6 @@ class ApiService {
   // Events Methods
   static Future<List<Event>> getEvents({String? search, String? category}) async {
     try {
-      if (enableDebugLogging) {
-        print('ApiService: Getting events...');
-      }
-
       final queryParams = <String, String>{};
       if (search != null && search.isNotEmpty) {
         queryParams['search'] = search;
@@ -208,12 +130,7 @@ class ApiService {
       final response = await http.get(
         uri,
         headers: _defaultHeaders,
-      ).timeout(requestTimeout);
-
-      if (enableDebugLogging) {
-        print('ApiService: Get events response: ${response.statusCode}');
-        print('ApiService: Get events body: ${response.body}');
-      }
+      );
 
       final data = json.decode(response.body);
       
@@ -224,28 +141,16 @@ class ApiService {
         throw Exception(data['message'] ?? 'Failed to load events');
       }
     } catch (e) {
-      if (enableDebugLogging) {
-        print('ApiService: Get events error: $e');
-      }
       rethrow;
     }
   }
 
   static Future<Event> getEvent(int eventId) async {
     try {
-      if (enableDebugLogging) {
-        print('ApiService: Getting event: $eventId');
-      }
-
       final response = await http.get(
         Uri.parse('$baseUrl/events/$eventId'),
         headers: _defaultHeaders,
-      ).timeout(requestTimeout);
-
-      if (enableDebugLogging) {
-        print('ApiService: Get event response: ${response.statusCode}');
-        print('ApiService: Get event body: ${response.body}');
-      }
+      );
 
       final data = json.decode(response.body);
       
@@ -255,9 +160,6 @@ class ApiService {
         throw Exception(data['message'] ?? 'Failed to load event');
       }
     } catch (e) {
-      if (enableDebugLogging) {
-        print('ApiService: Get event error: $e');
-      }
       rethrow;
     }
   }
@@ -274,10 +176,6 @@ class ApiService {
     required String token,
   }) async {
     try {
-      if (enableDebugLogging) {
-        print('ApiService: Creating event: $title');
-      }
-
       final response = await http.post(
         Uri.parse('$baseUrl/events'),
         headers: _authHeaders(token),
@@ -291,12 +189,7 @@ class ApiService {
           'price': price,
           'category': category,
         }),
-      ).timeout(requestTimeout);
-
-      if (enableDebugLogging) {
-        print('ApiService: Create event response: ${response.statusCode}');
-        print('ApiService: Create event body: ${response.body}');
-      }
+      );
 
       final data = json.decode(response.body);
       
@@ -306,9 +199,6 @@ class ApiService {
         throw Exception(data['message'] ?? 'Failed to create event');
       }
     } catch (e) {
-      if (enableDebugLogging) {
-        print('ApiService: Create event error: $e');
-      }
       rethrow;
     }
   }
@@ -326,10 +216,6 @@ class ApiService {
     String? category,
   }) async {
     try {
-      if (enableDebugLogging) {
-        print('ApiService: Updating event: $eventId');
-      }
-
       final updateData = <String, dynamic>{};
       if (title != null) updateData['title'] = title;
       if (description != null) updateData['description'] = description;
@@ -344,12 +230,7 @@ class ApiService {
         Uri.parse('$baseUrl/events/$eventId'),
         headers: _authHeaders(token),
         body: json.encode(updateData),
-      ).timeout(requestTimeout);
-
-      if (enableDebugLogging) {
-        print('ApiService: Update event response: ${response.statusCode}');
-        print('ApiService: Update event body: ${response.body}');
-      }
+      );
 
       final data = json.decode(response.body);
       
@@ -359,9 +240,6 @@ class ApiService {
         throw Exception(data['message'] ?? 'Failed to update event');
       }
     } catch (e) {
-      if (enableDebugLogging) {
-        print('ApiService: Update event error: $e');
-      }
       rethrow;
     }
   }
@@ -371,43 +249,23 @@ class ApiService {
     required String token,
   }) async {
     try {
-      if (enableDebugLogging) {
-        print('ApiService: Deleting event: $eventId');
-      }
-
       final response = await http.delete(
         Uri.parse('$baseUrl/events/$eventId'),
         headers: _authHeaders(token),
-      ).timeout(requestTimeout);
-
-      if (enableDebugLogging) {
-        print('ApiService: Delete event response: ${response.statusCode}');
-      }
+      );
 
       return response.statusCode == 200;
     } catch (e) {
-      if (enableDebugLogging) {
-        print('ApiService: Delete event error: $e');
-      }
       return false;
     }
   }
 
   static Future<List<Event>> getMyEvents(String token) async {
     try {
-      if (enableDebugLogging) {
-        print('ApiService: Getting my events...');
-      }
-
       final response = await http.get(
         Uri.parse('$baseUrl/my-events'),
         headers: _authHeaders(token),
-      ).timeout(requestTimeout);
-
-      if (enableDebugLogging) {
-        print('ApiService: Get my events response: ${response.statusCode}');
-        print('ApiService: Get my events body: ${response.body}');
-      }
+      );
 
       final data = json.decode(response.body);
       
@@ -418,9 +276,6 @@ class ApiService {
         throw Exception(data['message'] ?? 'Failed to load my events');
       }
     } catch (e) {
-      if (enableDebugLogging) {
-        print('ApiService: Get my events error: $e');
-      }
       rethrow;
     }
   }
@@ -432,28 +287,16 @@ class ApiService {
     Map<String, dynamic>? additionalInfo,
   }) async {
     try {
-      if (enableDebugLogging) {
-        print('ApiService: Registering for event: $eventId');
-      }
-
       final response = await http.post(
         Uri.parse('$baseUrl/events/$eventId/register'),
         headers: _authHeaders(token),
         body: json.encode({
           'additional_info': additionalInfo ?? {},
         }),
-      ).timeout(requestTimeout);
-
-      if (enableDebugLogging) {
-        print('ApiService: Register for event response: ${response.statusCode}');
-        print('ApiService: Register for event body: ${response.body}');
-      }
+      );
 
       return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) {
-      if (enableDebugLogging) {
-        print('ApiService: Register for event error: $e');
-      }
       return false;
     }
   }
@@ -463,43 +306,23 @@ class ApiService {
     required String token,
   }) async {
     try {
-      if (enableDebugLogging) {
-        print('ApiService: Canceling registration for event: $eventId');
-      }
-
       final response = await http.delete(
         Uri.parse('$baseUrl/events/$eventId/cancel'),
         headers: _authHeaders(token),
-      ).timeout(requestTimeout);
-
-      if (enableDebugLogging) {
-        print('ApiService: Cancel registration response: ${response.statusCode}');
-      }
+      );
 
       return response.statusCode == 200;
     } catch (e) {
-      if (enableDebugLogging) {
-        print('ApiService: Cancel registration error: $e');
-      }
       return false;
     }
   }
 
   static Future<List<Map<String, dynamic>>> getMyRegistrations(String token) async {
     try {
-      if (enableDebugLogging) {
-        print('ApiService: Getting my registrations...');
-      }
-
       final response = await http.get(
         Uri.parse('$baseUrl/my-registrations'),
         headers: _authHeaders(token),
-      ).timeout(requestTimeout);
-
-      if (enableDebugLogging) {
-        print('ApiService: Get my registrations response: ${response.statusCode}');
-        print('ApiService: Get my registrations body: ${response.body}');
-      }
+      );
 
       final data = json.decode(response.body);
       
@@ -509,9 +332,6 @@ class ApiService {
         throw Exception(data['message'] ?? 'Failed to load registrations');
       }
     } catch (e) {
-      if (enableDebugLogging) {
-        print('ApiService: Get my registrations error: $e');
-      }
       rethrow;
     }
   }
@@ -521,19 +341,10 @@ class ApiService {
     required String token,
   }) async {
     try {
-      if (enableDebugLogging) {
-        print('ApiService: Getting event registrations: $eventId');
-      }
-
       final response = await http.get(
         Uri.parse('$baseUrl/events/$eventId/registrations'),
         headers: _authHeaders(token),
-      ).timeout(requestTimeout);
-
-      if (enableDebugLogging) {
-        print('ApiService: Get event registrations response: ${response.statusCode}');
-        print('ApiService: Get event registrations body: ${response.body}');
-      }
+      );
 
       final data = json.decode(response.body);
       
@@ -543,9 +354,6 @@ class ApiService {
         throw Exception(data['message'] ?? 'Failed to load event registrations');
       }
     } catch (e) {
-      if (enableDebugLogging) {
-        print('ApiService: Get event registrations error: $e');
-      }
       rethrow;
     }
   }
