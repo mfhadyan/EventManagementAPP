@@ -38,14 +38,12 @@ A beautiful and functional event management Flutter application with a modern UI
 - **Loading States**: Smooth loading indicators and error handling
 - **Pull-to-Refresh**: Refresh event list by pulling down
 - **Form Validation**: Comprehensive input validation with user-friendly error messages
-- **Network Diagnostics**: Built-in connectivity testing and error reporting
 
 ### 🔍 Advanced Features
 - **Search & Filter**: Search events by title and filter by category
 - **Event Registration**: Register for events with optional additional information
 - **Registration Management**: View and manage event registrations
 - **My Events**: View events created by the current user
-- **Health Check**: API connectivity testing and status monitoring
 
 ## Color Palette
 
@@ -78,9 +76,6 @@ The app integrates with the Event Management API at `http://103.160.63.165/api` 
 - `DELETE /events/{id}/cancel` - Cancel event registration
 - `GET /my-registrations` - Get user's event registrations
 - `GET /events/{id}/registrations` - Get event registrations (creator only)
-
-### Health Check:
-- `GET /health` - API health status
 
 ## Dependencies
 
@@ -152,12 +147,11 @@ assets/
 1. **First Launch**: The app will show the login screen with custom app icon
 2. **Registration**: Tap "Sign Up" to create a new account
 3. **Login**: Enter your credentials to access the app
-4. **Browse Events**: View all available events on the home screen with background image
+4. **Browse Events**: View all available events on the home screen
 5. **Event Details**: Tap on any event to see detailed information
 6. **Register for Events**: Use the "Register for Event" button in event details
 7. **Create Event**: Use the floating action button to create new events
-8. **Delete Events**: Event creators can delete their events with confirmation
-9. **Logout**: Access the menu in the top-right corner to logout
+8. **Delete Events**: Event creators can delete their events
 
 ## Technical Details
 
@@ -171,9 +165,8 @@ The app uses the Provider pattern for state management:
 - **Token Management**: Secure token storage with proper cleanup
 
 ### API Communication
-- **Complete API Integration**: All endpoints from the Postman collection implemented
+- **Complete API Integration**: All endpoints implemented
 - **Error Handling**: Comprehensive error handling with user-friendly messages
-- **Network Diagnostics**: Built-in health checks and connectivity testing
 - **Retry Logic**: Automatic retry mechanisms for failed requests
 - **Timeout Management**: Proper timeout handling for all API calls
 
@@ -189,30 +182,6 @@ The app uses the Provider pattern for state management:
 - **Home Screen**: Events display dates as "dd month, yyyy" (e.g., "15 January, 2024")
 - **Event Details**: Full date and time information
 - **Form Inputs**: User-friendly date and time pickers
-
-## Recent Updates
-
-### v2.0.0 - Complete API Integration
-- ✅ **Full API Support**: All endpoints from Postman collection implemented
-- ✅ **Event Registration**: Complete registration system with additional info
-- ✅ **Event Management**: Create, update, delete events with proper permissions
-- ✅ **Search & Filter**: Advanced event search and category filtering
-- ✅ **User Profile**: Complete profile management system
-- ✅ **Network Diagnostics**: Built-in connectivity testing and error reporting
-
-### v1.5.0 - UI/UX Enhancements
-- ✅ **Custom App Icon**: Professional event-themed application icon
-- ✅ **Background Images**: Beautiful background imagery for enhanced visual appeal
-- ✅ **Date Format Updates**: Improved date display format
-- ✅ **Optional Categories**: Flexible category selection with custom input
-- ✅ **Confirmation Dialogs**: User-friendly confirmation for destructive actions
-
-### v1.0.0 - Core Features
-- ✅ **Authentication System**: Complete login/register functionality
-- ✅ **Event Management**: Basic CRUD operations for events
-- ✅ **Modern UI**: Clean, responsive design with custom theming
-- ✅ **State Management**: Provider-based state management
-- ✅ **API Integration**: RESTful API communication
 
 ## Contributing
 
